@@ -50,57 +50,61 @@ RESOLVE Return entry point address for a pipeline program.
 STAGENUM Return position in pipeline.
 STREAMNUM* Return stream number corresponding to an identifier.
 STREAMSTATE* Return connection status of stream."""
-  
+
 # NEW
 # these functions are added to the Stage class methods; thus the first argument is the stage
 import streams2
-def newaddStream(stage, spec):
-  # pattern for a function that accesses a parser
-  # which is generated/retrieved at first call and whose work is done
-  # by a nested function therefore minimizing startup overhead
 
-  def do(stage, parsedSpec):
-    print(stage.name, parsedSpec)
-  
-  parse("ADDSTREAm", (1, "[BOTH||INput|OUTput] [|streamID]", 1), do, stage, spec)
+
+def newaddStream(stage, spec):
+    # pattern for a function that accesses a parser
+    # which is generated/retrieved at first call and whose work is done
+    # by a nested function therefore minimizing startup overhead
+
+    def do(stage, parsedSpec):
+        print(stage.name, parsedSpec)
+
+    parse("ADDSTREAm", (1, "[BOTH||INput|OUTput] [|streamID]", 1), do, stage, spec)
 
 
 # CURRENT
 def addStream(stage, side="both", streamID=None):
-  """Implements the pipeline command:
-                 +-BOTH---+
-  >>--ADDSTREAm--+--------+-+-----------+-><
-                 +-INput--+ +-streamID-+
-                 +-OUTput-+
-     Used also by stageFactory when creating a stage
-     and when handling a label reference. """
-  ## FO connect pipeline commands to BNF parser?
+    """Implements the pipeline command:
+                   +-BOTH---+
+    >>--ADDSTREAm--+--------+-+-----------+-><
+                   +-INput--+ +-streamID-+
+                   +-OUTput-+
+       Used also by stageFactory when creating a stage
+       and when handling a label reference."""
+    ## FO connect pipeline commands to BNF parser?
 
-  def addOneStream(stage, container, cls, streamID):
-    if len(container) == stage.maxStreams:
-      stage.pipeLineSet.addError("Too many streams.")
-    stream = cls(container, stage, streamID)
+    def addOneStream(stage, container, cls, streamID):
+        if len(container) == stage.maxStreams:
+            stage.pipeLineSet.addError("Too many streams.")
+        stream = cls(container, stage, streamID)
 
-  stage.streamCount += 1
-  side = side.lower()
-  specOK = False
-  if side in ("in", "both"):
-    addOneStream(stage, stage.inStreams, streams2.InStream, streamID)
-    specOK = True
-  if side in ("out", "both"):
-    addOneStream(stage, stage.outStreams, streams2.OutStream, streamID)
-    specOK = True
-  if not specOK:
-    stage.pipeLineSet.addError("Invalid side %s." % (side, ))
+    stage.streamCount += 1
+    side = side.lower()
+    specOK = False
+    if side in ("in", "both"):
+        addOneStream(stage, stage.inStreams, streams2.InStream, streamID)
+        specOK = True
+    if side in ("out", "both"):
+        addOneStream(stage, stage.outStreams, streams2.OutStream, streamID)
+        specOK = True
+    if not specOK:
+        stage.pipeLineSet.addError("Invalid side %s." % (side,))
+
 
 def select(stage, streamSpec):
-  """Select a stream, e.g. 2
-     aelf.output = stage.output2
-     Record currently selected stream.
-     Affects callpipe connectors.
-     streamSpec is ordinal or streamId."""
-  
-## non-trivial callpipe example  
+    """Select a stream, e.g. 2
+    aelf.output = stage.output2
+    Record currently selected stream.
+    Affects callpipe connectors.
+    streamSpec is ordinal or streamId."""
+
+
+## non-trivial callpipe example
 """/* Convert userids to names */
    signal on novalue
    signal on error
@@ -115,41 +119,46 @@ def select(stage, streamSpec):
   end
   error: exit RC*(RC!=12)"""
 
-def callpipe(stage, spec): # addpipe also
-  """Create a subroutine pipeline using the spec.
-     Save the parent stage in and out stream connections.
-     Attach the subroutine pipeline as needed to the in and out streams of the parent stage.
-     Note that the subroutine pipeline does not have a dispatcher stage. It runs as part
-     of the current pipeline.
-     Connector syntax:
-     |--*-+----------------------------------+--:(-1)---|
-          +---+--------+-+-------------------+
-              +-INput--+ +---+--------+---+
-              +-OUTput-+     +-*------+
-                             +-stream-+"""
-  subPipe = SimplePipeLine(stage.pipeLineSet, spec, sub=True)
-  # depending on connectors and currently selected stream
-  inx = out = 0
-  ## modify our inStream and the pipelet's instream
-  stage.inStreams.connect(inx, subPipe.initialStage.run1)
-  
-  ## modify our outStream and the pipelet's outStream
-  stage.outStreams.connect(out, subPipe.stages[-1].output1)
+
+def callpipe(stage, spec):  # addpipe also
+    """Create a subroutine pipeline using the spec.
+    Save the parent stage in and out stream connections.
+    Attach the subroutine pipeline as needed to the in and out streams of the parent stage.
+    Note that the subroutine pipeline does not have a dispatcher stage. It runs as part
+    of the current pipeline.
+    Connector syntax:
+    |--*-+----------------------------------+--:(-1)---|
+         +---+--------+-+-------------------+
+             +-INput--+ +---+--------+---+
+             +-OUTput-+     +-*------+
+                            +-stream-+"""
+    subPipe = SimplePipeLine(stage.pipeLineSet, spec, sub=True)
+    # depending on connectors and currently selected stream
+    inx = out = 0
+    ## modify our inStream and the pipelet's instream
+    stage.inStreams.connect(inx, subPipe.initialStage.run1)
+
+    ## modify our outStream and the pipelet's outStream
+    stage.outStreams.connect(out, subPipe.stages[-1].output1)
+
 
 # following is a pattern to discover the subclasses of PipeCommmand defined in this module
 import sys, inspect
+
 thisModule = sys.modules[__name__]
 functions = inspect.getmembers(thisModule, inspect.isfunction)
 syntaxDict = {}
 
+
 def parse(cmd, syntax, func, stage, spec):
-  parserFunc = syntaxDict.get(cmd)
-  if parserFunc:
+    parserFunc = syntaxDict.get(cmd)
+    if parserFunc:
+        return func(stage, spec)
+    # create the parserlist for the command
+    syntaxDict[cmd] = spec, func
+    # add it to syntaxDict[cmd]
     return func(stage, spec)
-  # create the parserlist for the command
-  syntaxDict[cmd] = spec, func
-  # add it to syntaxDict[cmd]
-  return func(stage, spec)
+
 
 if __name__ == "__main__":
-  newaddStream(1,1)
+    newaddStream(1, 1)
