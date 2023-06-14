@@ -60,7 +60,7 @@ def newaddStream(stage, spec):
   # by a nested function therefore minimizing startup overhead
 
   def do(stage, parsedSpec):
-    print stage.name, parsedSpec
+    print(stage.name, parsedSpec)
   
   parse("ADDSTREAm", (1, "[BOTH||INput|OUTput] [|streamID]", 1), do, stage, spec)
 

@@ -138,13 +138,13 @@ class OutStream(Stream):
     packet.record = record
     # trace this transmission
     if self.stage.trace:
-      print "%s sent '%s' to %s" % (self.id, record, self.nextStream.id)
+      print("%s sent '%s' to %s" % (self.id, record, self.nextStream.id))
     self.send(packet)
   def eof(self):
     packet = self.stage.packet
     packet.eof = True
     if self.stage.trace:
-      print "%s sent EOF to %s" % (self.id, self.nextStream.id)
+      print("%s sent EOF to %s" % (self.id, self.nextStream.id))
     self.send(packet)
   def send(self, *args): pass # reassigned to downstream receive
 

@@ -1,12 +1,13 @@
+import importlib
 # --------- STAGES ----------
 
-try:    reload(rexxstages)
+try:    importlib.reload(rexxstages)
 except: import rexxstages
 
-try:    reload(stage2)
+try:    importlib.reload(stage2)
 except: import stage2
 
-try:    reload(threading)
+try:    importlib.reload(threading)
 except: import threading
 
 class Append(stage2.Stage):
@@ -150,7 +151,7 @@ class Console0(stage2.Stage):
     self.log("awaits input")
     while True:
       try:
-        record = raw_input()
+        record = input()
       except KeyboardInterrupt:
         self.sendeof1()
         break
@@ -166,7 +167,7 @@ class Console1(stage2.Stage):
   def setup(self, id=None):
     self.id = id
   def run1(self, record):
-    print "%s writes '%s'" % (self.id, record)
+    print("%s writes '%s'" % (self.id, record))
     self.output1(record)
     
 class Copy(stage2.Stage):
@@ -406,7 +407,7 @@ class Fanin(stage2.Stage):
           try:
             stream = self.streamsByID[stream]
           except KeyError:
-            raise Error, "Invalid streamid '%s'." % stream
+            raise Error("Invalid streamid '%s'." % stream)
     else:
       self.streamListIn = self.instreams[:]
       
@@ -730,7 +731,7 @@ class ReadFile(stage2.Stage):
   def initialize(self):
     try:
       self.file = open(self.fn)
-    except IOError, rest:
+    except IOError as rest:
       return rest
   def run(self):
     for record in self.file:
@@ -889,7 +890,7 @@ class OutputToFile(stage2.Stage):
   def initialize(self):
     try:
       self.file = open(self.fn, self.mode)
-    except IOError, err:
+    except IOError as err:
       return err
   def run(self, record):
     self.file.write(record + '\n')

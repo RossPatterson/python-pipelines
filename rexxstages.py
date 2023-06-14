@@ -1,14 +1,15 @@
-from  __future__ import with_statement
+
 import threading
 import time
+import importlib
 
-try:    reload(stage2)
+try:    importlib.reload(stage2)
 except: import stage2
 
-try:    reload(pipethread)
+try:    importlib.reload(pipethread)
 except: import pipethread
 
-try:    reload(pipeLogger)
+try:    importlib.reload(pipeLogger)
 except: import pipeLogger
 
 class RexxStage(stage2.Stage):
@@ -21,18 +22,18 @@ class RexxStage(stage2.Stage):
   # subcommands
   def readto(self, rest):    self.read(rest, "read")
   def peekto(self, rest):    self.read(rest, "peek")
-  def output(self, rest):    print 'output', self.rexxVars[rest]
-  def select(self, rest):    print 'select', rest
-  def short(self, rest):     print 'short'
-  def callpipe(self, rest):  print 'callpipe', rest
-  def addpipe(self, rest):   print 'addpipe', rest
-  def addstream(self, rest): print 'addstream'
+  def output(self, rest):    print('output', self.rexxVars[rest])
+  def select(self, rest):    print('select', rest)
+  def short(self, rest):     print('short')
+  def callpipe(self, rest):  print('callpipe', rest)
+  def addpipe(self, rest):   print('addpipe', rest)
+  def addstream(self, rest): print('addstream')
   # FO BEGOUTPUT COMMIT EOFREPORT NOCOMMIT REXX SETRC SUSPEND GETRANGE SCANRANGE  
   # SCANSTRING MESSAGE ISSUEMSG MAXSTREAM STAGENUM STREAMNUM STREAMSTATE 
 #  def x(self, rest): print ''
   # buld a dictionary of command : function entries
-  cmds = dict((key.lower(), value) for key, value in locals().items()) 
-  def fail(self, cmd): print 'unknown command', cmd
+  cmds = dict((key.lower(), value) for key, value in list(locals().items())) 
+  def fail(self, cmd): print('unknown command', cmd)
   def __init__(self, rexxString):
     self.rexxVars = {}
     self.inStreams = [RexxInStream()]
@@ -60,16 +61,16 @@ class RexxStage(stage2.Stage):
     """Implements readto and peekto.
        rest must be an expression resolving to a variable name.
        For now just expect a string literal."""
-    print "Read", rest, kind
+    print("Read", rest, kind)
     rest = rest.strip()
     record = self.inStreams[self.currentStream].read(kind)
     if rest:
       s = rest[0]
       if s != rest[-1]:
-        raise Exception, "bad string"
+        raise Exception("bad string")
       if s == '"""' or s == "'''":
         if rest[:3] != rest[-3:]:
-          raise Exception, "bad string"
+          raise Exception("bad string")
         else:
           varName = rest[3:-3]
       else:
@@ -78,9 +79,9 @@ class RexxStage(stage2.Stage):
   """Subclass of Stage for stage that needs to be run in its own thread.
      Required for stages that must suspend (e.g. contain callpipe, readto, ...)"""
   def exit(self, rc=0):
-    raise PipeException, ('exit', rc)
+    raise PipeException('exit', rc)
   def error(self, txt):
-    raise PipeException, ('error', txt)
+    raise PipeException('error', txt)
   def masterStart(self):
     t = threading(target=self.start, args=(ThreadManager(),))
 
@@ -88,7 +89,7 @@ class RexxStage(stage2.Stage):
     self.pipeLineSet.addThread(t)
     try:
       t.start()
-    except PipeException, arg:
+    except PipeException as arg:
       ## reasons:
       ##  exit(rc)
       ##
@@ -118,7 +119,7 @@ class RexxInStream:
     if kind in ("read", "peek"):
       self.consume = kind == "read"
     else:
-      raise Exception, 'Unexpected kind %s' % kind
+      raise Exception('Unexpected kind %s' % kind)
     thread = threading.currentThread()
     thread.cond = self.cond
 
@@ -168,7 +169,7 @@ if __name__ == "__main__":
 
   def dumpLog():
     for r in pipethread.logRecs:
-      print r
+      print(r)
 
   dumpLog()
 

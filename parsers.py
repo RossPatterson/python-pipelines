@@ -81,9 +81,9 @@ def test():
     name = 'Parser Test 1'
     def __init__(self, options):
       if not self.parseSpec(options):
-        print "Bummer" ## really want errors
+        print("Bummer") ## really want errors
     def setup(self, specs):
-      print specs
+      print(specs)
   #shelf.clear()
   # create an instance of Test1 and pass it a spec.
   opts = Test1("str 313 sep tab msg 3 foo 4 listrc")
@@ -157,7 +157,7 @@ class SpecificationParser:
     if specs:
       try:
         retval = self.parserCollection.parse(specs, self.parserCollection.mode)
-      except PipeExceptions.SpecError, msg:
+      except PipeExceptions.SpecError as msg:
         return False
       values, specs = retval
     else:
@@ -182,7 +182,7 @@ class SpecificationParser:
         subClass.parserCollection = parserCollection
         subClass.parserCollection.mode = mode
     else:
-      raise PipeExceptions.SyntaxError, "Invalid BNF length."
+      raise PipeExceptions.SyntaxError("Invalid BNF length.")
 
   def makeParserCollection(self, BNF):
     """Called from above and SyntacticVariable.getSvDict"""
@@ -191,7 +191,7 @@ class SpecificationParser:
     self.index = 0
     try:
       parserCollection = self.makeParsers() # recursive part
-    except PipeExceptions.SyntaxError, errorMsg:
+    except PipeExceptions.SyntaxError as errorMsg:
       # first error terminates parsing a BNF
       # we need to pass errorMsg on so the scanner can report it.
       self.error = True
@@ -247,15 +247,15 @@ class SpecificationParser:
                 self.processToken(parserCollection)
                 return parser
               else:
-                raise PipeExceptions.SyntaxError, "token missing"
+                raise PipeExceptions.SyntaxError("token missing")
             elif ch == ':': ## ensure this is first in group?
               if self.name:
-                raise PipeExceptions.SyntaxError, "duplicate parser name"
+                raise PipeExceptions.SyntaxError("duplicate parser name")
               else:
                 parser.name =  self.token
             elif ch == '!': ## ensure this is 1st or 2nd in group?
               if parser.default:
-                raise PipeExceptions.SyntaxError, "duplicate default"
+                raise PipeExceptions.SyntaxError("duplicate default")
               else:
                 ## this section is not complete - pList is never defined!
                 parser.default = self.token
@@ -281,7 +281,7 @@ class SpecificationParser:
               if candidateIndex < len(self.BNF) and self.category[candidateIndex] == 'r':
                 self.parser.repeat = self.BNF[candidateIndex] # * 0 or more, + 1 or more, ? 0 or 1
                 if self.parser.default and self.parser.repeat == "+":
-                  raise PipeExceptions.SyntaxError, "default value conflicts with + repeat count"
+                  raise PipeExceptions.SyntaxError("default value conflicts with + repeat count")
                 candidateIndex += 1
                 if candidateIndex < len(self.BNF) and self.BNF[candidateIndex] not in " |]":
                   startOfToken = candidateIndex
@@ -306,9 +306,9 @@ class SpecificationParser:
                   self.processToken()
                 return parser
               else:
-                raise PipeExceptions.SyntaxError, "unexpected character '%s' outside group" % ch
+                raise PipeExceptions.SyntaxError("unexpected character '%s' outside group" % ch)
             else:
-              raise PipeExceptions.SyntaxError, "unexpected character '%s' outside group" % ch
+              raise PipeExceptions.SyntaxError("unexpected character '%s' outside group" % ch)
           self.index += 1
     finally:
       parser.syntaxSpec = self.BNF[start:self.index]
@@ -335,7 +335,7 @@ class SpecificationParser:
       if parser:
         self.parser.svParsers.append(parser)
       else:
-        raise PipeExceptions.SyntaxError, "Unexpected syntactic variable %s" % (self.token, )
+        raise PipeExceptions.SyntaxError("Unexpected syntactic variable %s" % (self.token, ))
     elif initialCharCategory == "n": # leading digit - (if not default) see apldecode et.al.
       ## WHAT ABOUT leading digit as in APLDECODE 3279, BLOCK .. 15 3F?
       if not self.default or index:
@@ -369,7 +369,7 @@ class Token:
 ##          self.index = x
 ##      parser.expression = self.expression
     else:
-      raise PipeExceptions.SyntaxError, "unexpected character following '%s'" % token
+      raise PipeExceptions.SyntaxError("unexpected character following '%s'" % token)
       
 class ParserCollection(list):
   """collection of an object's parsers"""
@@ -382,7 +382,7 @@ class ParserCollection(list):
         values, specs = parser.parse(specs, mode) # seq of values of consumed tokens, leftover specs
       else:
         if parser.required:
-          raise PipeExceptions.SpecError, "Missing value for %s" % (self.syntaxSpec, )
+          raise PipeExceptions.SpecError("Missing value for %s" % (self.syntaxSpec, ))
         elif parser.default is not None:
           values = [parser.default]
     return values, specs
@@ -409,7 +409,7 @@ class Parser:
   def __init__(self):
     Parser.parserCount += 1
       
-  def __nonzero__(self):
+  def __bool__(self):
     return bool(self.kwdDict or self.svParsers)
       
   def parse(self, specs, mode): 
@@ -451,11 +451,11 @@ class Parser:
         break
     if values or not self.required:
       return values.get(), specs
-    raise PipeExceptions.SpecError, "required word missing"
+    raise PipeExceptions.SpecError("required word missing")
 
   def x__repr__(self):
     repr = ''
-    for item in self.kwdDict.items():
+    for item in list(self.kwdDict.items()):
       repr += item[0]
       if isinstance(item[1], list):
         repr += ': ' + item[1].__repr__() + '\n'
@@ -518,12 +518,12 @@ class TestParser(unittest.TestCase):
   def testParser(self):
     shelf.clear()
     opts = Test1("listcmd msg 3")
-    print opts.specs
+    print(opts.specs)
     self.assertEqual(opts.specs, "listcmd msglevel 3")
-    self.assert_(shelf.haskey("Test1"))
-    self.assert_(Test1.new)
+    self.assertTrue(shelf.haskey("Test1"))
+    self.assertTrue(Test1.new)
     opts = Test1("listcmd msg 3")
-    self.assert_(not Test1.new)
+    self.assertTrue(not Test1.new)
       
 def oldMain():
   BNF = "[KWA|KWB number [KWD|xorc]|KWC]*?"
@@ -570,11 +570,11 @@ class SyntacticVariable(object, SpecificationParser):
       svDict = shelve.open('sv.db', flag = 'r') # {classname(lower): instance of sv class, ...}
     else: # must create - one time activity
       from inspect import isclass
-      svdict = dict((name.lower(), cls()) for name, cls in globals().items()
+      svdict = dict((name.lower(), cls()) for name, cls in list(globals().items())
                     if isclass(cls) and issubclass(cls, SyntacticVariable))
       svDict = shelve.open('sv.db', flag='n', writeback=True)
       svDict.update(svdict)
-      for key, svInst in svdict.items():
+      for key, svInst in list(svdict.items()):
         if svInst.BNF:
           version = mode = 0
           BNF = svInst.BNF
@@ -597,7 +597,7 @@ class SyntacticVariable(object, SpecificationParser):
     if specs:
       try:
         retval = self.parserCollection.parse(specs, self.parserCollection.mode)
-      except PipeExceptions.SpecError, msg:
+      except PipeExceptions.SpecError as msg:
         return False
       values, specs = retval
     else:
@@ -651,7 +651,7 @@ class Xorc(TokenSyntacticVariable):
     elif 1 <= len(token) <= 2:
       value = token
     else:
-      raise PipeExceptions.SyntaxError, "Invalid xorc token '%s'." % token
+      raise PipeExceptions.SyntaxError("Invalid xorc token '%s'." % token)
     return value
 
 class Char(SyntacticVariable):
@@ -668,9 +668,9 @@ class HexPair(TokenSyntacticVariable):
         value = chr(int(spec, 16))
         return value
       except:
-        raise PipeExceptions.SyntaxError, "Invalid hexChar '%s'" % spec
+        raise PipeExceptions.SyntaxError("Invalid hexChar '%s'" % spec)
     else:
-      raise PipeExceptions.SyntaxError, "Invalid hexChar '%s'" % spec
+      raise PipeExceptions.SyntaxError("Invalid hexChar '%s'" % spec)
 
 class DecimalNumber(TokenSyntacticVariable):
   """NEW decimal number - sequence of decimal digits with optional period
@@ -798,7 +798,7 @@ class StreamID(TokenSyntacticVariable):
      a number. Case is respected in stream identifiers."""
   def subParse(self, spec):
     if spec.isdigit():
-      raise PipeExceptions.SpecError, "streamid '%s' must not be a number" % (spec, )
+      raise PipeExceptions.SpecError("streamid '%s' must not be a number" % (spec, ))
     return spec
 
 class Word(TokenSyntacticVariable):
@@ -829,8 +829,8 @@ sv.getSvDict()
 
 def test2():
   kwDict = {'end': ('endchar', Xorc)}
-  import cPickle
-  print cPickle.dumps(kwDict)
+  import pickle
+  print(pickle.dumps(kwDict))
 
 if __name__ == "__main__":
   test()

@@ -1,25 +1,26 @@
 #--------------------- pipetest.py - save this in your python path ---------------------
-from  __future__ import with_statement
+
 def foo():
   import test1
 import inspect
 import PipeExceptions
 import re
 import stagedict
+import importlib
 
-try:    reload(rexxstages)
+try:    importlib.reload(rexxstages)
 except: import rexxstages
 
-try:    reload(parsers)
+try:    importlib.reload(parsers)
 except: import parsers
 
-try:    reload(stage2)
+try:    importlib.reload(stage2)
 except: import stage2
 
-try:    reload(basicStages)
+try:    importlib.reload(basicStages)
 except: import basicStages
 
-try:    reload(pipethread)
+try:    importlib.reload(pipethread)
 except: import pipethread
 
 import sys
@@ -50,10 +51,10 @@ class PipeAndStageOptions(parsers.SpecificationParser):
     self.rest = spec
     
   def setup(self, spec):
-    for key, value in spec.items():
+    for key, value in list(spec.items()):
       if key in ('escape', 'endchar', 'stagesep', 'separator'):
         if value in "()*.:":
-          raise Error, "invalid character %s in %s" % (value, key)
+          raise Error("invalid character %s in %s" % (value, key))
       if key == 'stagesep':
         key = 'separator'
       if 'msglevel' in key or 'no' in key:
@@ -110,7 +111,7 @@ class PipeLineSet:
   def run(self, records=None, trace=0):
     self.records = records
     if self.errors:
-      print "Can't run pipeline due to errors."
+      print("Can't run pipeline due to errors.")
       return
     startTime = time.time()
     self.trace = trace
@@ -135,8 +136,8 @@ class PipeLineSet:
     for thread in self.stageThreads:
       thread.join(0.1)
     for thread in self.stageThreads:
-      print thread
-    print "Time %s seconds." % (time.time() - startTime, )
+      print(thread)
+    print("Time %s seconds." % (time.time() - startTime, ))
 
   def splitter(self, specsIn, sep, esc):
     """Common routine for splitting a pipeSpec on endchar
@@ -154,9 +155,9 @@ class PipeLineSet:
       while esc:
         if spec[-1] == esc and spec[-2] != esc:
           if itemNo < len(specs):
-            spec += sep + specs.next()
+            spec += sep + next(specs)
           else:
-            raise Error, "Escape charater found at end of spec %s", spec
+            raise Error("Escape charater found at end of spec %s").with_traceback(spec)
         else:
           break
       collection.append(spec)
@@ -175,7 +176,7 @@ class PipeLineSet:
     self.stageModule = basicStages
     self.aliases = dict((name.title(),cls)
                         for name,cls in inspect.getmembers(self.stageModule, inspect.isclass))
-    aliasedStages = [i[1] for i in self.stageModule.__dict__.items() if hasattr(i[1], 'alias')]
+    aliasedStages = [i[1] for i in list(self.stageModule.__dict__.items()) if hasattr(i[1], 'alias')]
     for aliasedStage in aliasedStages:
       self.aliases[aliasedStage.alias] = aliasedStage
     
@@ -190,17 +191,17 @@ class PipeLineSet:
       
     if self.errors:
       for error in self.errors:
-        print error
+        print(error)
     else:
       for pipeLine in self.simplePipeLines:
         for stage in pipeLine.stages:
           stage.finalizeMaster() # check streams for count and connect status, and any customization.
         for error in self.errors:
-          print error
+          print(error)
 
   def addError(self, msg, msgNo=0):
     self.errors.append((msg, msgNo))
-    print "Error %s %s" % (msgNo, msg)
+    print("Error %s %s" % (msgNo, msg))
 
 class StageList(list):
   count = 0

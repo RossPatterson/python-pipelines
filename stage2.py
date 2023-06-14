@@ -1,10 +1,11 @@
-try:    reload(parsers)
+import importlib
+try:    importlib.reload(parsers)
 except: import parsers
 
-try:    reload(streams2)
+try:    importlib.reload(streams2)
 except: import streams2
 
-try:    reload(pipeCommands)
+try:    importlib.reload(pipeCommands)
 except: import pipeCommands
 
 class Packet:
@@ -79,7 +80,7 @@ class Stage(parsers.SpecificationParser):
     """Called by scanner after all stages created.
        Some stages override for specific tasks."""
   def log(self, msg):
-    print "%s %s" % (self.id, msg)
+    print("%s %s" % (self.id, msg))
   def initialize(self):
     """Called each time pipe is run.
        Some stages override e.g. file i/o to open; count to reset totals."""

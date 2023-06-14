@@ -1,5 +1,5 @@
 # pipethread module
-from  __future__ import with_statement
+
 import threading
 import time
 import pipeLogger
@@ -63,7 +63,7 @@ if __name__ == "__main__":
   # ensure threads are stopped
   class R:
     def start(self, *args):
-      print args
+      print(args)
       self.sThread = threading.currentThread()
       self.sThread.args = args
       pipeLogger.logger.warning('asdf')
@@ -72,13 +72,13 @@ if __name__ == "__main__":
   threads.add(r1.start, 'stage', 1, 2, 3)
   threads.startAll()
   threads.joinAll(.01)
-  print threads[0].args
+  print(threads[0].args)
   #print threads
   #threads.cleanup()
 
   def dumpLog():
     for r in threads:
-      print r.logRecs
+      print(r.logRecs)
 
   dumpLog()
 
